@@ -128,15 +128,17 @@ clay_run_test(
 	_clay.local_cleanup = NULL;
 	_clay.local_cleanup_payload = NULL;
 
-	clay_print("%c", (_clay.suite_errors > error_st) ? 'F' : '.');
+	clay_print("%s %d - %s\n",
+		(_clay.suite_errors > error_st) ? "not ok" : "ok",
+		_clay.test_count, test->name);
 }
 
 static void
 clay_print_error(int num, const struct clay_error *error)
 {
-	clay_print("  %d) Failure:\n", num);
+	clay_print("#   %d) Failure:\n", num);
 
-	clay_print("%s::%s (%s) [%s:%d] [-t%d]\n",
+	clay_print("# %s::%s (%s) [%s:%d] [-t%d]\n",
 		error->suite,
 		error->test,
 		"no description",
@@ -144,12 +146,12 @@ clay_print_error(int num, const struct clay_error *error)
 		error->line_number,
 		error->test_number);
 
-	clay_print("  %s\n", error->error_msg);
+	clay_print("#   %s\n", error->error_msg);
 
 	if (error->description != NULL)
-		clay_print("  %s\n", error->description);
+		clay_print("#   %s\n", error->description);
 
-	clay_print("\n");
+	clay_print("#\n");
 }
 
 static void
@@ -176,6 +178,8 @@ clay_run_suite(const struct clay_suite *suite)
 
 	_clay.active_suite = suite->name;
 	_clay.suite_errors = 0;
+
+	clay_print("# *** %s ***\n", suite->name);
 
 	for (i = 0; i < suite->test_count; ++i) {
 		_clay.active_test = test[i].name;
@@ -235,7 +239,7 @@ clay_parse_args(
 				exit(-1);
 			}
 
-			clay_print("Started (%s::%s)\n",
+			clay_print("# Started (%s::%s)\n",
 				suites[callbacks[num].suite_n].name,
 				callbacks[num].name);
 
@@ -248,7 +252,7 @@ clay_parse_args(
 				exit(-1);
 			}
 
-			clay_print("Started (%s::*)\n", suites[num].name);
+			clay_print("# Started (%s::*)\n", suites[num].name);
 			clay_run_suite(&suites[num]);
 			break;
 
@@ -267,7 +271,7 @@ clay_test(
 	const struct clay_suite *suites,
 	size_t suite_count)
 {
-	clay_print("Loaded %d suites: %s\n", (int)suite_count, suites_str);
+	clay_print("# Loaded %d suites: %s\n", (int)suite_count, suites_str);
 
 	if (clay_sandbox() < 0) {
 		fprintf(stderr,
@@ -281,7 +285,7 @@ clay_test(
 
 	} else {
 		size_t i;
-		clay_print("Started\n");
+		clay_print("# Started\n");
 
 		for (i = 0; i < suite_count; ++i) {
 			const struct clay_suite *s = &suites[i];
@@ -289,8 +293,15 @@ clay_test(
 		}
 	}
 
-	clay_print("\n\n");
+	if (!_clay.total_errors)
+		clay_print("# passed all %lu test(s)\n", _clay.test_count);
+	else
+		clay_print("# failed %d among %lu test(s)\n",
+			_clay.total_errors, _clay.test_count);
+
 	clay_report_errors();
+
+	clay_print("1..%d\n", _clay.test_count);
 
 	clay_unsandbox();
 	return _clay.total_errors;
