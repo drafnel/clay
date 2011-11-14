@@ -98,6 +98,38 @@ static void clay_unsandbox(void);
 static int clay_sandbox(void);
 
 static void
+clay_print_error(int num, const struct clay_error *error)
+{
+	clay_print("  ---\n");
+	clay_print("  message : %s\n", error->error_msg);
+	clay_print("  severity: fail\n");
+	clay_print("  suite   : %s\n", error->suite);
+	clay_print("  test    : %s\n", error->test);
+	clay_print("  file    : %s\n", error->file);
+	clay_print("  line    : %d\n", error->line_number);
+	if (error->description != NULL)
+		clay_print("  description: %s\n", error->description);
+	clay_print("  ...\n");
+}
+
+static void
+clay_report_errors(void)
+{
+	int i = 1;
+	struct clay_error *error, *next;
+
+	error = _clay.errors;
+	while (error != NULL) {
+		next = error->next;
+		clay_print_error(i++, error);
+		free(error->description);
+		free(error);
+		error = next;
+	}
+	_clay.errors = _clay.last_error = NULL;
+}
+
+static void
 clay_run_test(
 	const struct clay_func *test,
 	const struct clay_func *initialize,
@@ -131,43 +163,8 @@ clay_run_test(
 	clay_print("%s %d - %s\n",
 		(_clay.suite_errors > error_st) ? "not ok" : "ok",
 		_clay.test_count, test->name);
-}
 
-static void
-clay_print_error(int num, const struct clay_error *error)
-{
-	clay_print("#   %d) Failure:\n", num);
-
-	clay_print("# %s::%s (%s) [%s:%d] [-t%d]\n",
-		error->suite,
-		error->test,
-		"no description",
-		error->file,
-		error->line_number,
-		error->test_number);
-
-	clay_print("#   %s\n", error->error_msg);
-
-	if (error->description != NULL)
-		clay_print("#   %s\n", error->description);
-
-	clay_print("#\n");
-}
-
-static void
-clay_report_errors(void)
-{
-	int i = 1;
-	struct clay_error *error, *next;
-
-	error = _clay.errors;
-	while (error != NULL) {
-		next = error->next;
-		clay_print_error(i++, error);
-		free(error->description);
-		free(error);
-		error = next;
-	}
+	clay_report_errors();
 }
 
 static void
@@ -271,6 +268,7 @@ clay_test(
 	const struct clay_suite *suites,
 	size_t suite_count)
 {
+	clay_print("TAP version 13\n");
 	clay_print("# Loaded %d suites: %s\n", (int)suite_count, suites_str);
 
 	if (clay_sandbox() < 0) {
@@ -298,8 +296,6 @@ clay_test(
 	else
 		clay_print("# failed %d among %lu test(s)\n",
 			_clay.total_errors, _clay.test_count);
-
-	clay_report_errors();
 
 	clay_print("1..%d\n", _clay.test_count);
 
