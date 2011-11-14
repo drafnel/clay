@@ -273,6 +273,7 @@ clay_test(
 	size_t suite_count)
 {
 	clay_print("TAP version 13\n");
+	clay_print("1..%lu\n", cb_count);
 	clay_print("# Loaded %d suites: %s\n", (int)suite_count, suites_str);
 
 	if (clay_sandbox() < 0) {
@@ -300,8 +301,6 @@ clay_test(
 	else
 		clay_print("# failed %d among %lu test(s)\n",
 			_clay.total_errors, _clay.test_count);
-
-	clay_print("1..%d\n", _clay.test_count);
 
 	clay_unsandbox();
 	return _clay.total_errors;
