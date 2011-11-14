@@ -233,6 +233,8 @@ clay_parse_args(
 		case 't':
 			if ((size_t)num >= cb_count) {
 				fprintf(stderr, "Test number %d does not exist.\n", num);
+				clay_print("Bail out! Test number %d does not "
+					"exist.\n", num);
 				exit(-1);
 			}
 
@@ -246,6 +248,8 @@ clay_parse_args(
 		case 's':
 			if ((size_t)num >= suite_count) {
 				fprintf(stderr, "Suite number %d does not exist.\n", num);
+				clay_print("Bail out! Suite number %d does not"
+					" exist.\n", num);
 				exit(-1);
 			}
 
@@ -344,6 +348,8 @@ clay__assert(
 		if (!_clay.trampoline_enabled) {
 			fprintf(stderr,
 				"Fatal error: a cleanup method raised an exception.");
+			clay_print("Bail out! Fatal error: a cleanup method "
+				"raised an exception.");
 			exit(-1);
 		}
 
